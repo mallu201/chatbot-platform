@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+</head>
+<body>
+
+  <h2>Your Projects</h2>
+
+  <div>
+    <input type="text" id="projectName" placeholder="Project name">
+    <button onclick="createProject()">Create Project</button>
+  </div>
+
+  <ul id="projectList"></ul>
+
+  <hr>
+
+  <h3>Manage Prompts</h3>
+  <div>
+    <select id="promptProjectSelect">
+      <option value="">Select a project</option>
+    </select>
+    <br><br>
+    <input type="text" id="promptName" placeholder="Prompt name (e.g., System Instructions)">
+    <br><br>
+    <textarea id="promptContent" placeholder="Enter system prompt/instructions for this project. This will guide how the AI responds. Leave empty to use default." rows="6" style="width: 400px;"></textarea>
+    <br><br>
+    <button onclick="createPrompt()">Create Prompt</button>
+    <p style="font-size: 12px; color: #666;">Tip: Add detailed instructions here to customize AI behavior for this project.</p>
+  </div>
+
+  <div id="promptsList" style="margin-top: 20px;"></div>
+
+  <hr>
+
+  <h3>Project Files</h3>
+  <div>
+    <select id="fileProjectSelect">
+      <option value="">Select a project</option>
+    </select>
+    <br><br>
+    <input type="file" id="fileInput">
+    <br><br>
+    <button onclick="uploadFile()">Upload File</button>
+  </div>
+
+  <div id="filesList" style="margin-top: 20px;"></div>
+
+  <br><br>
+  <a href="/chat">Go to Chat</a>
+
+  <script src="/static/script.js"></script>
+  <script>
+    if (window.location.pathname === "/dashboard") {
+      loadProjects();
+      loadProjectsForPrompts();
+      loadProjectsForFiles();
+    }
+  </script>
+</body>
+</html>
