@@ -135,3 +135,11 @@ def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
         return {"status": "unhealthy", "error": str(e)}
+    
+from prometheus_fastapi_instrumentator import Instrumentator
+
+app = FastAPI(title="Chatbot Platform", version="1.0.0")
+
+# 👇 Add this line
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+    
