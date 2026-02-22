@@ -2,6 +2,7 @@ import logging
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from prometheus_fastapi_instrumentator import Instrumentator
 
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path, override=True)
@@ -46,19 +47,21 @@ def validate_openai_key():
             logger.warning(f"Could not read .env file: {e}")
     
     if not api_key:
-        logger.error("⚠️  WARNING: OPENAI_API_KEY not found in .env file!")
+        logger.error("  WARNING: OPENAI_API_KEY not found in .env file!")
         logger.error("   Please create backend/.env with: OPENAI_API_KEY=sk-proj-...")
         return False
     
     api_key = api_key.strip()
     if not api_key.startswith("sk-"):
-        logger.error(f"⚠️  WARNING: Invalid API key format! Key should start with 'sk-'")
+        logger.error(f"  WARNING: Invalid API key format! Key should start with 'sk-'")
         return False
     
-    logger.info(f"✅ OpenAI API key loaded successfully (length: {len(api_key)})")
+    logger.info(f" OpenAI API key loaded successfully (length: {len(api_key)})")
     return True
 
 app = FastAPI(title="Chatbot Platform", version="1.0.0")
+
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 # Validate required environment variables on startup
 def validate_required_env_vars():
@@ -72,16 +75,16 @@ def validate_required_env_vars():
     # Validate SECRET_KEY
     try:
         from .auth import SECRET_KEY
-        logger.info(f"✅ SECRET_KEY loaded successfully (length: {len(SECRET_KEY)})")
+        logger.info(f" SECRET_KEY loaded successfully (length: {len(SECRET_KEY)})")
     except ValueError as e:
-        logger.error(f"⚠️  WARNING: SECRET_KEY validation failed: {e}")
+        logger.error(f"  WARNING: SECRET_KEY validation failed: {e}")
         errors.append("SECRET_KEY")
     
     if errors:
-        logger.error(f"⚠️  Missing required environment variables: {', '.join(errors)}")
+        logger.error(f"  Missing required environment variables: {', '.join(errors)}")
         logger.error("   The application may not work correctly. Please check backend/.env file.")
     else:
-        logger.info("✅ All required environment variables are configured")
+        logger.info(" All required environment variables are configured")
 
 validate_required_env_vars()
 
@@ -99,8 +102,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 app.include_router(user.router)
 app.include_router(project.router)
@@ -108,9 +113,15 @@ app.include_router(prompt.router)
 app.include_router(chat.router)
 app.include_router(files.router)
 
+#@app.get("/")
+#def home(request: Request):
+    #return templates.TemplateResponse("index.html", {"request": request})
+
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+
 
 @app.get("/dashboard")
 def dashboard(request: Request):
@@ -135,11 +146,4 @@ def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
         return {"status": "unhealthy", "error": str(e)}
-    
-from prometheus_fastapi_instrumentator import Instrumentator
-
-app = FastAPI(title="Chatbot Platform", version="1.0.0")
-
-# 👇 Add this line
-Instrumentator().instrument(app).expose(app, endpoint="/metrics")
-    
+        
